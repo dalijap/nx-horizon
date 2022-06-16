@@ -1,0 +1,33 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* binary
+
+# Declare text files that will always have CRLF line endings on checkout
+*.gitattributes text eol=lf diff
+*.gitignore text eol=lf diff
+
+*.txt text eol=crlf diff
+*.md text eol=crlf diff
+*.xml text eol=crlf diff
+*.json text eol=crlf diff
+*.css text eol=crlf diff
+*.htm text eol=crlf diff
+*.html text eol=crlf diff
+*.xhtml text eol=crlf diff
+*.yml text eol=crlf diff
+*.tex text eol=crlf diff
+
+*.manifest text eol=crlf diff
+*.rc text eol=crlf diff
+*.bat text eol=crlf diff
+
+*.pas text eol=crlf diff
+*.inc text eol=crlf diff
+*.dfm text eol=crlf diff
+*.fmx text eol=crlf diff
+*.dpr text eol=crlf diff
+*.dpk text eol=crlf diff
+*.dproj text eol=crlf diff
+*.groupproj text eol=crlf diff
+*.deployproj text eol=crlf diff
+*.plist text eol=lf diff
+
