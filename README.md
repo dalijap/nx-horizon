@@ -199,6 +199,7 @@ call `BeginWork` before you start such a thread, and `EndWork` after it
 finishes. Make sure all code paths will eventually call a matching `EndWork`, as
 not doing so will cause a deadlock when you call `WaitFor`. 
 
+~~~~
 procedure TSubscriber.OnLongEvent(const aEvent: TIntegerEvent);
 begin
   fIntegerSubscription.BeginWork;
@@ -217,6 +218,7 @@ begin
     raise;
   end;
 end;
+~~~~
 
 
 ### Posting and sending events 
