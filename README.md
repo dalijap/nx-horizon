@@ -29,7 +29,7 @@ __Declare event type:__
 Events are categorized by type information - `TypeInfo`. Each separate event
 category requires a distinct type. 
 
-~~~~
+```pas
 type
   TFoo = class
   ...
@@ -41,13 +41,13 @@ type
   TStringEvent = type string;
   TFooEvent = INxEvent<TFoo>;
   TOtherFooEvent = INxEvent<TOtherFoo>;
-~~~~
+```
 
 __Subscribe/unsubscribe to event:__
 
 Subscribing to events can be added to any existing class.
 
-~~~~
+```pas
 type
   TSubscriber = class
   protected
@@ -86,18 +86,18 @@ procedure TSubscriber.OnStringEvent(const aEvent: TStringEvent);
 begin
   Writeln(aEvent);
 end;
-~~~~
+```
 
 __Send messages:__
 
-~~~~
+```pas
   NxHorizon.Instance.Post<TIntegerEvent>(5);
   NxHorizon.Instance.Send<TStringEvent>('abc', Async);
-~~~~
+```
 
 or
 
-~~~~
+```pas
 var
   IntEvent: TIntegerEvent;
   StrEvent: TStringEvent;
@@ -106,7 +106,7 @@ var
     StrEvent := 'abc';
     NxHorizon.Instance.Post(IntEvent);
     NxHorizon.Instance.Send(StrEvent, Async);
-~~~~
+```
 
 ## Documentation
 
@@ -118,9 +118,9 @@ management or value types. You can also use manually managed, long-lived object
 instances as events, but in such cases, you must ensure that they will not be
 destroyed before the already-dispatched messages are fully processed.
 
-~~~~
+```pas
 procedure(const aEvent: T) of object;
-~~~~
+```
 
 ### Delivery options
 
@@ -199,7 +199,7 @@ call `BeginWork` before you start such a thread, and `EndWork` after it
 finishes. Make sure all code paths will eventually call a matching `EndWork`, as
 not doing so will cause a deadlock when you call `WaitFor`. 
 
-~~~~
+```pas
 procedure TSubscriber.OnLongEvent(const aEvent: TIntegerEvent);
 begin
   fIntegerSubscription.BeginWork;
@@ -218,15 +218,15 @@ begin
     raise;
   end;
 end;
-~~~~
+```
 
 
 ### Posting and sending events 
 
-~~~~
+```pas
 procedure Post<T>(const aEvent: T);
 procedure Send<T>(const aEvent: T; aDelivery: TNxHorizonDelivery);
-~~~~
+```
 
 The `Post` method is used for posting events where the delivery option will
 depend on the subscription delivery option set while subscribing to the event.
@@ -271,7 +271,7 @@ more control over your code, and the freedom to change the behavior of a
 specific handler without impacting all other handlers running on the same event
 bus instance:
 
-~~~~
+```pas
 procedure TSubscriber.OnLongEvent(const aEvent: TLongEvent);
 begin
   TTask.Run(
@@ -280,7 +280,7 @@ begin
     ... 
     end, DedicatedThreadPool);
 end;
-~~~~
+```
 
 ## Enhancements 
 
