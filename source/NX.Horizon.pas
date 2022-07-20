@@ -260,8 +260,6 @@ type
     class property Instance: TNxHorizon read fInstance;
   end;
 
-implementation
-
 {$IFNDEF DELPHI_TOKYO_UP}
 type
   TThreadHelper = class helper for TThread
@@ -271,7 +269,11 @@ type
     ///  </summary>
     class procedure ForceQueue(const aThread: TThread; const aThreadProc: TThreadProcedure); static;
   end;
+{$ENDIF}
 
+implementation
+
+{$IFNDEF DELPHI_TOKYO_UP}
 class procedure TThreadHelper.ForceQueue(const aThread: TThread; const aThreadProc: TThreadProcedure);
 begin
   // main purpose of this ForceQueue is to delay running of aTheadProc if called from main thread
