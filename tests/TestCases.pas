@@ -67,21 +67,6 @@ type
     procedure TestNew;
   end;
 
-  TestTNxEventInteger = class(TTestCase)
-  published
-    procedure TestNew;
-  end;
-
-  TestTNxEventString = class(TTestCase)
-  published
-    procedure TestNew;
-  end;
-
-  TestTNxEventRecord = class(TTestCase)
-  published
-    procedure TestNew;
-  end;
-
   TestTNxEventSubscription = class(TTestCase)
   strict private
     sut: INxEventSubscription;
@@ -116,10 +101,22 @@ type
     procedure TestPostAsync;
     procedure TestPostMainSync;
     procedure TestPostMainAsync;
-    procedure TestSendSync;
-    procedure TestSendAsync;
-    procedure TestSendMainSync;
-    procedure TestSendMainAsync;
+    procedure TestSendSyncSync;
+    procedure TestSendSyncAsync;
+    procedure TestSendSyncMainSync;
+    procedure TestSendSyncMainAsync;
+    procedure TestSendAsyncSync;
+    procedure TestSendAsyncAsync;
+    procedure TestSendAsyncMainSync;
+    procedure TestSendAsyncMainAsync;
+    procedure TestSendMainSyncSync;
+    procedure TestSendMainSyncAsync;
+    procedure TestSendMainSyncMainSync;
+    procedure TestSendMainSyncMainAsync;
+    procedure TestSendMainAsyncSync;
+    procedure TestSendMainAsyncAsync;
+    procedure TestSendMainAsyncMainSync;
+    procedure TestSendMainAsyncMainAsync;
   end;
 
   TestNxHorizon = class(TTestCase)
@@ -130,6 +127,16 @@ type
   end;
 
 implementation
+
+procedure SleepAndSync;
+begin
+  Sleep(100);
+  CheckSynchronize;
+  Sleep(100);
+  CheckSynchronize;
+  Sleep(100);
+  CheckSynchronize;
+end;
 
 // ***** TFoo *****
 
@@ -224,7 +231,7 @@ var
   aValue: Integer;
 begin
   aValue := 100;
-  ReturnValue := TNxEventObject<Integer>.New(aValue);
+  ReturnValue := TNxEvent<Integer>.New(aValue);
 
   CheckNotNull(ReturnValue);
   CheckEquals(aValue, ReturnValue.Value);
@@ -238,7 +245,7 @@ var
   aValue: string;
 begin
   aValue := 'abc';
-  ReturnValue := TNxEventObject<string>.New(aValue);
+  ReturnValue := TNxEvent<string>.New(aValue);
 
   CheckNotNull(ReturnValue);
   CheckEquals(aValue, ReturnValue.Value);
@@ -252,7 +259,7 @@ var
   aValue: TPoint;
 begin
   aValue := TPoint.Create(100, 200);
-  ReturnValue := TNxEventObject<TPoint>.New(aValue);
+  ReturnValue := TNxEvent<TPoint>.New(aValue);
 
   CheckNotNull(ReturnValue);
   CheckEquals(aValue.X, ReturnValue.Value.X);
@@ -269,50 +276,10 @@ begin
   aValue := TStringList.Create;
   aValue.Add('abc');
   aValue.Add('123');
-  ReturnValue := TNxEventObject<TStringList>.New(aValue);
+  ReturnValue := TNxEvent<TStringList>.New(aValue);
 
   CheckNotNull(ReturnValue);
   CheckEquals(aValue.Count, ReturnValue.Value.Count);
-end;
-
-// ***** TestTNxEventInteger *****
-
-procedure TestTNxEventInteger.TestNew;
-var
-  ReturnValue: TNxEvent<Integer>;
-  aValue: Integer;
-begin
-  aValue := 100;
-  ReturnValue := TNxEvent<Integer>.New(aValue);
-
-  CheckEquals(aValue, ReturnValue.Value);
-end;
-
-// ***** TestTNxEventString *****
-
-procedure TestTNxEventString.TestNew;
-var
-  ReturnValue: TNxEvent<string>;
-  aValue: string;
-begin
-  aValue := 'abc';
-  ReturnValue := TNxEvent<string>.New(aValue);
-
-  CheckEquals(aValue, ReturnValue.Value);
-end;
-
-// ***** TestTNxEventRecord *****
-
-procedure TestTNxEventRecord.TestNew;
-var
-  ReturnValue: TNxEvent<TPoint>;
-  aValue: TPoint;
-begin
-  aValue := TPoint.Create(100, 200);
-  ReturnValue := TNxEvent<TPoint>.New(aValue);
-
-  CheckEquals(aValue.X, ReturnValue.Value.X);
-  CheckEquals(aValue.Y, ReturnValue.Value.Y);
 end;
 
 // ***** TestTNxEventSubscription *****
@@ -626,12 +593,7 @@ begin
     begin
       sut.Post(aEvent);
     end).Start;
-  Sleep(100);
-  CheckSynchronize;
-  Sleep(100);
-  CheckSynchronize;
-  Sleep(100);
-  CheckSynchronize;
+  SleepAndSync;
   CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
 end;
 
@@ -641,31 +603,27 @@ var
 begin
   sut.Subscribe<INXEvent<TFoo>>(MainAsync, Subscriber.FooEvent);
 
-  aEvent := TNxEventObject<TFoo>.New(TFoo.Create('abc'));
+  aEvent := TNxEvent<TFoo>.New(TFoo.Create('abc'));
   TThread.CreateAnonymousThread(
     procedure
     begin
       sut.Post(aEvent);
-      sut.Post(TNxEventObject<TBar>.New(TBar.Create(1, 'abc')));
+      sut.Post(TNxEvent<TBar>.New(TBar.Create(1, 'abc')));
     end).Start;
-  Sleep(100);
-  CheckSynchronize;
-  Sleep(100);
-  CheckSynchronize;
-  Sleep(100);
-  CheckSynchronize;
+  SleepAndSync;
   CheckEquals(Trim(Subscriber.Events.Text), 'M abc');
 end;
 
-procedure TestTNxHorizon.TestSendSync;
+procedure TestTNxHorizon.TestSendSyncSync;
 var
   aDelivery: TNxHorizonDelivery;
   aEvent: Integer;
 begin
-  sut.Subscribe<Integer>(Async, Subscriber.IntegerEvent);
+  sut.Subscribe<Integer>(Sync, Subscriber.IntegerEvent);
 
   aDelivery := Sync;
   aEvent := 5;
+
   sut.Send(aEvent, aDelivery);
   CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
 
@@ -679,7 +637,76 @@ begin
   CheckEquals(Trim(Subscriber.Events.Text), 'B 5');
 end;
 
-procedure TestTNxHorizon.TestSendAsync;
+procedure TestTNxHorizon.TestSendSyncAsync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(Async, Subscriber.IntegerEvent);
+
+  aDelivery := Sync;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  Sleep(500);
+  CheckEquals(Trim(Subscriber.Events.Text), 'B 5');
+end;
+
+procedure TestTNxHorizon.TestSendSyncMainSync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(MainSync, Subscriber.IntegerEvent);
+
+  aDelivery := Sync;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+end;
+
+procedure TestTNxHorizon.TestSendSyncMainAsync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(MainAsync, Subscriber.IntegerEvent);
+
+  aDelivery := Sync;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+end;
+
+procedure TestTNxHorizon.TestSendAsyncSync;
 var
   aDelivery: TNxHorizonDelivery;
   aEvent: Integer;
@@ -688,12 +715,94 @@ begin
 
   aDelivery := Async;
   aEvent := 5;
+
   sut.Send(aEvent, aDelivery);
+  Sleep(500);
+  CheckEquals(Trim(Subscriber.Events.Text), 'B 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
   Sleep(500);
   CheckEquals(Trim(Subscriber.Events.Text), 'B 5');
 end;
 
-procedure TestTNxHorizon.TestSendMainSync;
+procedure TestTNxHorizon.TestSendAsyncAsync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(Async, Subscriber.IntegerEvent);
+
+  aDelivery := Async;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  Sleep(500);
+  CheckEquals(Trim(Subscriber.Events.Text), 'B 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  Sleep(500);
+  CheckEquals(Trim(Subscriber.Events.Text), 'B 5');
+end;
+
+procedure TestTNxHorizon.TestSendAsyncMainSync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(MainSync, Subscriber.IntegerEvent);
+
+  aDelivery := Async;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+end;
+
+procedure TestTNxHorizon.TestSendAsyncMainAsync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(MainAsync, Subscriber.IntegerEvent);
+
+  aDelivery := Async;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+end;
+
+procedure TestTNxHorizon.TestSendMainSyncSync;
 var
   aDelivery: TNxHorizonDelivery;
   aEvent: Integer;
@@ -702,21 +811,90 @@ begin
 
   aDelivery := MainSync;
   aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
   TThread.CreateAnonymousThread(
     procedure
     begin
       sut.Send(aEvent, aDelivery);
     end).Start;
-  Sleep(100);
-  CheckSynchronize;
-  Sleep(100);
-  CheckSynchronize;
-  Sleep(100);
-  CheckSynchronize;
+  SleepAndSync;
   CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
 end;
 
-procedure TestTNxHorizon.TestSendMainAsync;
+procedure TestTNxHorizon.TestSendMainSyncAsync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(Async, Subscriber.IntegerEvent);
+
+  aDelivery := MainSync;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+end;
+
+procedure TestTNxHorizon.TestSendMainSyncMainSync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(MainSync, Subscriber.IntegerEvent);
+
+  aDelivery := MainSync;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+end;
+
+procedure TestTNxHorizon.TestSendMainSyncMainAsync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(MainSync, Subscriber.IntegerEvent);
+
+  aDelivery := MainSync;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+end;
+
+procedure TestTNxHorizon.TestSendMainAsyncSync;
 var
   aDelivery: TNxHorizonDelivery;
   aEvent: Integer;
@@ -725,17 +903,90 @@ begin
 
   aDelivery := MainAsync;
   aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
   TThread.CreateAnonymousThread(
     procedure
     begin
       sut.Send(aEvent, aDelivery);
     end).Start;
-  Sleep(100);
-  CheckSynchronize;
-  Sleep(100);
-  CheckSynchronize;
-  Sleep(100);
-  CheckSynchronize;
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+end;
+
+procedure TestTNxHorizon.TestSendMainAsyncAsync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(Async, Subscriber.IntegerEvent);
+
+  aDelivery := MainAsync;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+end;
+
+procedure TestTNxHorizon.TestSendMainAsyncMainSync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(MainSync, Subscriber.IntegerEvent);
+
+  aDelivery := MainAsync;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+end;
+
+procedure TestTNxHorizon.TestSendMainAsyncMainAsync;
+var
+  aDelivery: TNxHorizonDelivery;
+  aEvent: Integer;
+begin
+  sut.Subscribe<Integer>(MainAsync, Subscriber.IntegerEvent);
+
+  aDelivery := MainAsync;
+  aEvent := 5;
+
+  sut.Send(aEvent, aDelivery);
+  SleepAndSync;
+  CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
+
+  Subscriber.Events.Clear;
+  TThread.CreateAnonymousThread(
+    procedure
+    begin
+      sut.Send(aEvent, aDelivery);
+    end).Start;
+  SleepAndSync;
   CheckEquals(Trim(Subscriber.Events.Text), 'M 5');
 end;
 
@@ -746,16 +997,12 @@ begin
   CheckNotNull(NxHorizon.Instance);
 end;
 
-
 initialization
 
   RegisterTest(TestTNxEventObjectInteger.Suite);
   RegisterTest(TestTNxEventObjectString.Suite);
   RegisterTest(TestTNxEventObjectRecord.Suite);
   RegisterTest(TestTNxEventObjectClass.Suite);
-  RegisterTest(TestTNxEventInteger.Suite);
-  RegisterTest(TestTNxEventString.Suite);
-  RegisterTest(TestTNxEventRecord.Suite);
   RegisterTest(TestTNxEventSubscription.Suite);
   RegisterTest(TestTNxHorizon.Suite);
   RegisterTest(TestNxHorizon.Suite);

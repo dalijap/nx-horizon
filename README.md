@@ -232,7 +232,10 @@ The `Post` method is used for posting events where the delivery option will
 depend on the subscription delivery option set while subscribing to the event.
 
 The `Send` method overrides the subscription delivery option, and dispatches an
-event in a manner determined by the passed `aDelivery` parameter.
+event in a manner determined by the passed `aDelivery` parameter. If the
+subscription specified dispatching in the context of the main thread, `Send`
+method will honor that requirement, so you don't have to worry about
+synchronization in those event handlers. 
 
 Whether `Post` or `Send` will be blocking calls depends on the delivery options
 used. When you use `Post`, please note that different subscriptions to the same
@@ -250,6 +253,45 @@ can freely call any methods on such a reference from any thread.
 If you need to support different channels (additional event categorization), you
 can achieve such functionality by creating a separate event bus instance for
 each channel. 
+
+### Managing lifetime of additional event bus instances
+
+Functionality of `TNxHorizon` class cannot be directly exposed as interface
+because it uses parameterized methods that are not supported for interfaces.
+
+Besides singleton instance available through `NxHorizon.Instance` it is possible
+to use separate bus instances for other purposes, with much shorter lifetime. In
+order to simplify life management for those instances and avoid accessing
+dangling pointers in multi-threading environment, you can use `INxHorizon` to
+safely hold and share such event bus instances.
+
+This also opens possibility to use event bus instances, which are rather
+lightweight as dispatching mechanism in _observer pattern_, where observable
+subject holds and exposes its `INxHorizon` reference, to which observers can
+attach to. When subscribing, observers should store `INxHorizon` instance they
+are subscribing to, so they can safely unsubscribe from it even if subject
+itself has been released in the meantime. 
+
+This allows using _observer pattern_ in thread-safe manner with subjects that
+are not automatically managed instances. Also holding strong (thread-safe)
+reference to the event bus instance instead of subject directly avoids potential
+reference cycles when using managed object instances, instead of using
+thread-unsafe weak references.
+
+`INxHorizon.Instance` returns wrapped `TNxHorizon` instance which is manually
+managed by a container. It can be safely used as long as subscriber holds strong
+reference to its container. 
+
+The subject needs to call `ShutDown` method on its `INxHorizon` reference during
+its cleanup process. This will set `IsActive` flag to `False` and send
+`TNxHorizonShutDownEvent` to its subscribers, so they can perform proper
+cleanup. `TNxHorizonShutDownEvent` contains wrapped `TNxHorizon` instance, so
+subscribers can use single shutdown event handler to manage multiple subjects.
+
+Calling `ShutDown` does not have any impact on the bus ability to send and post
+messages. If you need to make sure that you are not dispatching new events
+during the cleanup process, you can check `IsActive` flag before calling `Post`
+or `Send`.
 
 ### Dedicated thread pool support - XE7 and newer versions
 
