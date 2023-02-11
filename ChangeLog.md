@@ -1,6 +1,12 @@
 # NX Horizon Change Log
 
-## 1.1.0
+## 1.1.1 Hotfix
+
++ `TNxHorizonContainer.New` signature changed
+  - Returns `INXHorizon` interface instead of `TNXHorizonContainer` for proper
+    initialization of reference counting
+
+## 1.1.0 Release
 
 ### Breaking changes
 
@@ -32,7 +38,7 @@
   such subscriptions will be done synchronously through `TThread.Synchronize`.
 
 
-## 1.0.0 
+## 1.0.0 Release
 
  + Initial release
 

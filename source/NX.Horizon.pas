@@ -249,7 +249,7 @@ type
     procedure ShutDown; virtual;
     property Instance: TNxHorizon read GetInstance;
     property IsActive: Boolean read GetIsActive;
-    class function New: TNxHorizonContainer; static;
+    class function New: INxHorizon; static;
   end;
 
   NxHorizon = class
@@ -656,7 +656,7 @@ begin
   Result := fIsActive;
 end;
 
-class function TNxHorizonContainer.New: TNxHorizonContainer;
+class function TNxHorizonContainer.New: INxHorizon;
 begin
   Result := TNxHorizonContainer.Create;
 end;
