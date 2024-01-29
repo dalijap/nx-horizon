@@ -308,7 +308,7 @@ implementation
 class procedure TThreadHelper.ForceQueue(const aThread: TThread; const aThreadProc: TThreadProcedure);
 begin
   // main purpose of this ForceQueue is to delay running of aTheadProc if called from main thread
-  if (aThread = nil) or (CurrentThread.ThreadID = MainThreadID) then
+  if CurrentThread.ThreadID = MainThreadID then
     begin
       CreateAnonymousThread(
         procedure
